@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PNG Scale Demo with MarketCap Ruler</title>
+<!-- CRT Effect (delete these 2 lines to remove CRT effect) -->
+<link rel="stylesheet" href="./public/crt-effect.css">
+<script src="./public/crt-effect.js"></script>
+<style>
+/* --- your CSS unchanged --- */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+    background-image: url('./public/bg3.png');
+    background-size: cover;
+    background-position: center 100%;
+    background-repeat: no-repeat;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    transition: background-position 0.2s cubic-bezier(0.68, -0.55, 0.265, 1.55), filter 0.2s ease;
+    filter: blur(0px);
+}
+
+.container { position: relative; width: 100%; height: 100%; }
+.marketcap-info {
+    position: absolute;
+    top: 30px;
+    right: 20px;
+    background: #000;
+    color: #fff;
+    padding: 15px 25px;
+    border: 3px solid #fff;
+    border-radius: 0;
+    font-size: 36px;
+    z-index: 1000;
+    font-family: 'Courier New', monospace;
+}
+.marketcap-amount {
+    color: #00ff40;
+    transition: color 0.5s ease, text-shadow 0.5s ease;
+}
+.marketcap-amount.animating {
+    text-shadow: 0 0 10px #00ff40, 0 0 20px #00ff40, 0 0 30px #00ff40;
+}
+.marketcap-amount.animating.decreasing {
+    color: #ff4444;
+    text-shadow: 0 0 10px #ff4444, 0 0 20px #ff4444, 0 0 30px #ff4444;
+}
+.instruction-text {
+    position: fixed;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #00ff40;
+    font-family: 'Courier New', monospace;
+    font-size: 18px;
+    text-align: center;
+    z-index: 1000;
+}
+.sound-toggle {
+    position: absolute;
+    top: 130px;
+    right: 20px;
+    background: #000;
+    color: #00ff40;
+    border: 3px solid #fff;
+    border-radius: 0;
+    padding: 12px 16px;
+    font-size: 16px;
+    cursor: pointer;
+    z-index: 1000;
+    transition: all 0.2s ease;
+    font-family: 'Courier New', monospace;
+}
+.sound-toggle:hover {
+    background-color: rgba(0, 255, 64, 0.1);
+    border-color: #00ff40;
+}
+.sound-toggle.disabled {
+    color: #666;
+    border-color: #666;
+}
+.now-playing {
+    background: #000;
+    color: #00ff40;
+    border: 3px solid #fff;
+    border-radius: 0;
+    padding: 12px 16px;
+    font-size: 16px;
+    font-family: 'Courier New', monospace;
+}
+.social-buttons {
+    position: absolute;
+    bottom: 80px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 1000;
+}
+.social-btn {
+    background: #000;
+    color: #00ff40;
+    border: 3px solid #fff;
+    border-radius: 0;
+    padding: 12px 16px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Courier New', monospace;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+}
+.social-btn:hover {
+    background-color: rgba(0, 255, 64, 0.1);
+    border-color: #00ff40;
+    color: #00ff40;
+}
+.sound-wave {
+    display: inline-block;
+    margin-right: 8px;
+}
+.sound-wave span {
+    display: inline-block;
+    width: 2px;
+    height: 8px;
+    background: #00ff40;
+    margin-right: 1px;
+    animation: wave 1.2s ease-in-out infinite;
+}
+.sound-wave span:nth-child(2) { animation-delay: 0.1s; }
+.sound-wave span:nth-child(3) { animation-delay: 0.2s; }
+.sound-wave span:nth-child(4) { animation-delay: 0.3s; }
+.sound-wave span:nth-child(5) { animation-delay: 0.4s; }
+@keyframes wave {
+    0%, 100% { height: 4px; }
+    50% { height: 12px; }
+}
+.track-controls {
+    position: absolute;
+    top: 200px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    z-index: 1000;
+}
+.skip-btn {
+    height: 47px;
+    background: #000;
+    color: #00ff40;
+    border: 2px solid #fff;
+    border-radius: 0;
+    padding: 8px 10px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Courier New', monospace;
+    line-height: 1;
+}
+.skip-btn:hover {
+    background-color: rgba(0, 255, 64, 0.1);
+    border-color: #00ff40;
+}
+.dialogue-box {
+    position: fixed;
+    top: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 700px;
+    height: 180px;
+    background: #000;
+    border: 3px solid #fff;
+    border-radius: 0;
+    z-index: 15000;
+    display: none;
+    font-family: 'Courier New', monospace;
+    animation: dialogueAppear 0.3s ease-out;
+}
+.dialogue-portrait {
+    position: absolute;
+    left: 10px;
+    top: 10px;
+    width: 80px;
+    height: 80px;
+    background: #333;
+    border: 2px solid #fff;
+}
+.dialogue-portrait img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.dialogue-content {
+    position: absolute;
+    left: 110px;
+    top: 10px;
+    right: 10px;
+    bottom: 10px;
+}
+.dialogue-name {
+    color: #fff;
+    font-size: 36px;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+.dialogue-text {
+    color: #fff;
+    font-size: 28px;
+    line-height: 1.4;
+    word-wrap: break-word;
+}
+@keyframes dialogueAppear {
+    0% {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-20px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+.image-stack {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    z-index: 2;
+    transition: transform 0.2s cubic-bezier(0.68,-0.55,0.265,1.55);
+}
+.top-image {
+    max-width: 64%;
+    max-height: 40%;
+    margin-bottom: -20px;
+    transform: translate(44px, 23px);
+    z-index: 10000;
+    transition: transform 0.2s cubic-bezier(0.68,-0.55,0.265,1.55);
+}
+.bottom-image {
+    max-width: 48%;
+    max-height: 20%;
+    z-index: 10001;
+    transform-origin: center bottom;
+    transition: transform 0.2s cubic-bezier(0.68,-0.55,0.265,1.55);
+}
+.scale-slider-container { position: absolute; opacity: 0%; bottom: 30px; right: 30px; }
+.ruler-container { 
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%; 
+    pointer-events: none; 
+    z-index: 0; 
+}
+.ruler { 
+    position: relative; 
+    width: 100%; 
+    height: 100%; 
+}
+.ruler-line { 
+    position: absolute; 
+    left: 50%; 
+    top: 0; 
+    width: 2px; 
+    height: 100%; 
+    background: rgba(255,255,255,0.3); 
+    transform: translateX(-50%);
+}
+.tick { 
+    position: absolute; 
+    left: 0; 
+    width: 100%; 
+    height: 2px; 
+    background: white; 
+}
+.tick-label { 
+    position: absolute; 
+    left: 20px; 
+    color: white; 
+    font-size: 44px; 
+    transform: translateY(-50%) translateY(-28px); 
+    white-space: nowrap;
+    font-family: 'Courier New', monospace;
+}
+.ruler-pointer { 
+    position: absolute; 
+    left: -1px; 
+    width: 4px; 
+    height: 4px; 
+    background: rgb(0, 255, 85); 
+    border-radius: 50%;
+}
+.confetti {
+    position: fixed;
+    width: 200px;
+    height: 120px;
+    pointer-events: none;
+    z-index: 5000;
+    animation: confetti-fall 2s ease-out forwards;
+}
+.confetti-text {
+    position: fixed;
+    pointer-events: none;
+    z-index: 5000;
+    animation: confetti-fall 2s ease-out forwards;
+    color: white;
+    font-size: 24px;
+    font-weight: bold;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+    white-space: nowrap;
+}
+.carousel-container {
+    position: fixed;
+    bottom: 10px;
+    left: 0;
+    width: 100%;
+    height: 40px;
+    overflow: hidden;
+    z-index: 200;
+    background: rgba(0,0,0,0.3);
+}
+.carousel-text {
+    position: absolute;
+    white-space: nowrap;
+    color: #00ff40;
+    font-size: 36px;
+    font-weight: normal;
+    line-height: 40px;
+    right: 0;
+    animation: scroll-right-to-left 10s linear infinite;
+    font-family: 'Courier New', monospace;
+}
+@keyframes scroll-right-to-left {
+    0% {
+        transform: translateX(100%);
+    }
+    100% {
+        transform: translateX(-100vw);
+    }
+}
+.arrow-up {
+    position: fixed;
+    width: 60px;
+    height: 150px;
+    pointer-events: none;
+    z-index: 5000;
+    animation: shoot-up 3s ease-out forwards;
+    filter: brightness(1.5) saturate(2) drop-shadow(0 0 15px #00ff40);
+}
+@keyframes shoot-up {
+    0% {
+        transform: translateY(100vh) rotate(0deg) scale(var(--arrow-scale, 1));
+        opacity: 1;
+    }
+    90% {
+        transform: translateY(-80vh) rotate(var(--arrow-rotation, 0deg)) scale(var(--arrow-scale, 1));
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(-100vh) rotate(var(--arrow-rotation, 0deg)) scale(var(--arrow-scale, 1));
+        opacity: 0;
+    }
+}
+@keyframes confetti-fall {
+    0% {
+        transform: translateY(-100vh) rotate(0deg) scale(var(--random-scale, 1));
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh) rotate(var(--random-rotation, 45deg)) scale(var(--random-scale, 1));
+        opacity: 0;
+    }
+}
+.bounce-animation { animation: bounceScale 0.6s cubic-bezier(0.68,-0.55,0.265,1.55); }
+@keyframes bounceScale {
+    0% { transform: scale(var(--current-scale)); }
+    50% { transform: scale(calc(var(--current-scale) + 0.1)); }
+    100% { transform: scale(var(--new-scale)); }
+}
+</style>
+</head>
+<body>
+
+<audio id="audioUp" src="./public/audio1.mp3" preload="auto"></audio>
+<audio id="audioDown" src="./public/audio2.mp3" preload="auto"></audio>
+<audio id="bgMusic1" src="./public/bgmusic.mp3" preload="auto"></audio>
+<audio id="bgMusic2" src="./public/bgmusic2.mp3" preload="auto"></audio>
+<audio id="bgMusic3" src="./public/bgmusic3.mp3" preload="auto"></audio>
+
+<div class="instruction-text">every $AGI buy makes Alons GYATT grow, every sell shrinks it</div>
+
+<div class="container">
+    <div class="marketcap-info" id="marketCap">Market Cap: <span class="marketcap-amount">Loading...</span></div>
+    <button class="sound-toggle" id="soundToggle">🔊 Special effects ON</button>
+    <div class="social-buttons">
+        <a href="https://x.com/AlonGyattIndex" target="_blank" class="social-btn">X</a>
+        <a href="https://pump.fun" target="_blank" class="social-btn">Pump.fun</a>
+    </div>
+    <div class="track-controls" id="trackControls" style="display: none;">
+        <button class="skip-btn" id="prevTrack">‹</button>
+        <div class="now-playing" id="nowPlaying">
+            <div class="sound-wave">
+                <span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <span id="trackName">Track 1</span>
+        </div>
+        <button class="skip-btn" id="nextTrack">›</button>
+    </div>
+
+    <div class="image-stack" id="imageStack">
+        <img src="./public/top.png" alt="Top Image" class="top-image" id="topImage">
+        <img src="./public/bottom.png" alt="Bottom Image" class="bottom-image" id="bottomImage">
+    </div>
+
+    <!-- Ruler -->
+    <div class="ruler-container">
+        <div class="ruler" id="ruler">
+            <div class="ruler-line"></div>
+            <div class="ruler-pointer" id="rulerPointer"></div>
+        </div>
+    </div>
+
+    <div class="scale-slider-container">
+        <div class="slider-label">Scale: <span id="scaleValue">1.0</span></div>
+        <input type="range" class="scale-slider" id="scaleSlider" min="1" max="5" step="0.1" value="1">
+    </div>
+</div>
+
+<!-- Carousel -->
+<div class="carousel-container" id="carouselContainer">
+</div>
+
+<!-- Dialogue Box -->
+<div class="dialogue-box" id="dialogueBox">
+    <div class="dialogue-portrait">
+        <img src="./public/top.png" alt="Alon">
+    </div>
+    <div class="dialogue-content">
+        <div class="dialogue-name">Alon</div>
+        <div class="dialogue-text" id="dialogueText">wow you guys are making my gyatt grow so large</div>
+    </div>
+</div>
+
+<script>
+let scaleFactor = 1;
+let backgroundPosition = 100;
+
+const bottomImage = document.getElementById('bottomImage');
+const topImage = document.getElementById('topImage');
+const imageStack = document.getElementById('imageStack');
+const scaleSlider = document.getElementById('scaleSlider');
+const scaleValue = document.getElementById('scaleValue');
+const marketCapDisplay = document.getElementById('marketCap');
+const ruler = document.getElementById('ruler');
+const rulerPointer = document.getElementById('rulerPointer');
+const audioUp = document.getElementById('audioUp');
+const audioDown = document.getElementById('audioDown');
+const bgMusicTracks = [
+    document.getElementById('bgMusic1'),
+    document.getElementById('bgMusic2'),
+    document.getElementById('bgMusic3')
+];
+let currentTrackIndex = 0;
+let currentBgMusic = bgMusicTracks[0];
+
+const minMc = 5000, maxMc = 200000;
+const supply = 1_000_000_000;
+let lastMc = minMc;
+
+// Carousel messages
+const carouselMessages = [
+    "pls pamp alons gyatt by using the new $AGI facilitated technology on pumpfun",
+    "new $AGI technology facilitated on pumpfun allows you to increase its founders gyatt size",
+    "every buy pamps the gyatt facilitated by groundbraking $AGI technology on pumpfun",
+    "help alon reach the moon powered by the latest $AGI technology on pumpfun"
+];
+const jeetMessage = "the jeets are attacking alons gyatt size, concerned that the advanced technology may threaten their sidelined positions";
+let currentMessageIndex = 0;
+let isJeetMode = false;
+
+const dialogueMessages = [
+    "wow you guys are making my gyatt grow so large",
+    "i dont know how to explain my gyatt size to my ct following",
+    "delete this right now",
+    "its just getting started",
+    "someone stop this madness",
+    "fuck it. jew mode.",
+    "holy shit im going to need a bigger chair",
+    "i regret making pumpfun streams a thing",
+    "probably higher",
+    "pumpfolio looking good here",
+    "creator capital markets my ass",
+    "my ass so fat i have to pay property taxes",
+    "looks like you will need a bigger monitor",
+    "ground breaking technology they said, kinda true lol",
+    "dexscreener competitor?",
+    "woah what a BUNDA",
+    "yooooo its growing",
+    "This is what satoshi dreamed for",
+    "future of finance right here",
+    "ngl fullporting",
+    "make sure to follow the X",
+    "who tf made this",
+    "someone really spent hours making this",
+    "next level memecoin",
+];
+let dialogueTimeout = null;
+
+function typeText(element, text, speed = 50) {
+    element.textContent = '';
+    let i = 0;
+    
+    function typeChar() {
+        if (i < text.length) {
+            element.textContent += text.charAt(i);
+            i++;
+            setTimeout(typeChar, speed);
+        }
+    }
+    
+    typeChar();
+}
+
+function showDialogue() {
+    const dialogueBox = document.getElementById('dialogueBox');
+    const dialogueText = document.getElementById('dialogueText');
+    
+    const randomMessage = dialogueMessages[Math.floor(Math.random() * dialogueMessages.length)];
+    
+    dialogueBox.style.display = 'block';
+    
+    // Start typing animation
+    typeText(dialogueText, randomMessage, 60);
+    
+    // Hide dialogue after 7 seconds
+    setTimeout(() => {
+        dialogueBox.style.display = 'none';
+    }, 7000);
+}
+
+function startRandomDialogue() {
+    // Show dialogue every 20-35 seconds randomly
+    const randomDelay = 15000 + Math.random() * 15000;
+    
+    dialogueTimeout = setTimeout(() => {
+        showDialogue();
+        startRandomDialogue(); // Schedule next dialogue
+    }, randomDelay);
+}
+
+function createScrollingMessage() {
+    const carouselContainer = document.getElementById('carouselContainer');
+    
+    // Clear any existing messages
+    carouselContainer.innerHTML = '';
+    
+    const messageElement = document.createElement('div');
+    messageElement.className = 'carousel-text';
+    
+    if (isJeetMode) {
+        messageElement.textContent = jeetMessage;
+        messageElement.style.color = '#ff4444';
+    } else {
+        messageElement.textContent = carouselMessages[currentMessageIndex];
+        messageElement.style.color = '#00ff40';
+        currentMessageIndex = (currentMessageIndex + 1) % carouselMessages.length;
+    }
+    
+    carouselContainer.appendChild(messageElement);
+}
+
+function createArrowShoot() {
+    const arrowCount = 25;
+    
+    for (let i = 0; i < arrowCount; i++) {
+        const arrow = document.createElement('img');
+        arrow.src = './public/arrow-up.png';
+        arrow.className = 'arrow-up';
+        arrow.style.left = Math.random() * window.innerWidth + 'px';
+        arrow.style.animationDelay = Math.random() * 2 + 's';
+        arrow.style.animationDuration = (2.5 + Math.random() * 1.5) + 's';
+        
+        const randomScale = 0.8 + Math.random() * 0.6;
+        arrow.style.setProperty('--arrow-scale', randomScale);
+        
+        const randomRotation = (Math.random() - 0.5) * 15;
+        arrow.style.setProperty('--arrow-rotation', randomRotation + 'deg');
+        
+        document.body.appendChild(arrow);
+        
+        setTimeout(() => {
+            arrow.remove();
+        }, 7000);
+    }
+}
+
+function createConfetti() {
+    const confettiCount = 35;
+    const colors = ['#00ff40', '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57'];
+    
+    for (let i = 0; i < confettiCount; i++) {
+        const isText = Math.random() < 0.3; // 30% chance of text
+        
+        if (isText) {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti-text';
+            confetti.textContent = '+1 INCH GYATT';
+            confetti.style.left = Math.random() * window.innerWidth + 'px';
+            confetti.style.animationDelay = Math.random() * 3 + 's';
+            confetti.style.animationDuration = (6 + Math.random() * 4) + 's';
+            
+            const randomScale = 0.8 + Math.random() * 0.8;
+            confetti.style.setProperty('--random-scale', randomScale);
+            
+            const randomRotation = Math.random() * 360;
+            confetti.style.setProperty('--random-rotation', randomRotation + 'deg');
+            
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.color = randomColor;
+            
+            document.body.appendChild(confetti);
+            
+            setTimeout(() => {
+                confetti.remove();
+            }, 12000);
+        } else {
+            const confetti = document.createElement('img');
+            confetti.src = './public/logo.png';
+            confetti.className = 'confetti';
+            confetti.style.left = Math.random() * window.innerWidth + 'px';
+            confetti.style.animationDelay = Math.random() * 3 + 's';
+            confetti.style.animationDuration = (6 + Math.random() * 4) + 's';
+            
+            const randomScale = 0.5 + Math.random() * 1.5;
+            confetti.style.setProperty('--random-scale', randomScale);
+            
+            const randomRotation = Math.random() * 360;
+            confetti.style.setProperty('--random-rotation', randomRotation + 'deg');
+            
+            // Remove random coloring - keep original logo colors
+            
+            document.body.appendChild(confetti);
+            
+            setTimeout(() => {
+                confetti.remove();
+            }, 12000);
+        }
+    }
+}
+
+function createNegativeConfetti() {
+    const confettiCount = 20;
+    
+    for (let i = 0; i < confettiCount; i++) {
+        const confetti = document.createElement('div');
+        confetti.className = 'confetti-text';
+        confetti.textContent = '-1 INCH GYATT';
+        confetti.style.left = Math.random() * window.innerWidth + 'px';
+        confetti.style.animationDelay = Math.random() * 2 + 's';
+        confetti.style.animationDuration = (6 + Math.random() * 4) + 's';
+        
+        const randomScale = 0.8 + Math.random() * 0.8;
+        confetti.style.setProperty('--random-scale', randomScale);
+        
+        const randomRotation = Math.random() * 360;
+        confetti.style.setProperty('--random-rotation', randomRotation + 'deg');
+        
+        confetti.style.color = '#ff4444';
+        
+        document.body.appendChild(confetti);
+        
+        setTimeout(() => {
+            confetti.remove();
+        }, 12000);
+    }
+}
+
+function buildRuler(centerMc) {
+    Array.from(ruler.children).forEach(c => { if(c !== rulerPointer) c.remove(); });
+
+    const containerHeight = ruler.clientHeight;
+    const visibleRange = 25000;
+    const majorTickStep = 10000;
+    const minorTickStep = 5000;
+    const pxPerUnit = containerHeight / (2 * visibleRange);
+
+    const startMc = 0;
+    const endMc = Math.ceil((centerMc + visibleRange)/minorTickStep) * minorTickStep;
+    
+    // Calculate the actual position of the top corner of top.png
+    const topImageRect = topImage.getBoundingClientRect();
+    const containerRect = document.body.getBoundingClientRect();
+    const topCornerY = topImageRect.top - containerRect.top;
+    
+    const pointerY = topCornerY;
+
+    for (let mc = startMc; mc <= endMc; mc += minorTickStep) {
+        const y = pointerY - (mc - centerMc) * pxPerUnit;
+
+        const tick = document.createElement("div");
+        tick.className = "tick";
+        tick.style.top = y + "px";
+        tick.style.opacity = (mc % majorTickStep === 0) ? "1" : "0.15";
+        ruler.appendChild(tick);
+
+        if (mc % majorTickStep === 0 && mc >= 0) {
+            const label = document.createElement("div");
+            label.className = "tick-label";
+            label.textContent = "$" + mc.toLocaleString();
+            label.style.top = y + "px";
+            ruler.appendChild(label);
+        }
+    }
+
+    rulerPointer.style.top = pointerY + "px";
+}
+
+function updateRuler(marketCap) {
+    const steps = 10;
+    let step = 0;
+    const startMc = lastMc;
+    const delta = (marketCap - startMc) / steps;
+
+    const anim = setInterval(() => {
+        step++;
+        const mc = startMc + delta * step;
+        buildRuler(mc);
+        if(step >= steps) {
+            clearInterval(anim);
+            lastMc = marketCap;
+        }
+    }, 30);
+}
+
+function updateScale(newScale) {
+    newScale = parseFloat(newScale);
+    if (newScale === scaleFactor) return;
+
+    const currentScale = scaleFactor;
+    scaleFactor = newScale;
+
+    bottomImage.classList.remove("bounce-animation");
+    void bottomImage.offsetWidth;
+    bottomImage.classList.add("bounce-animation");
+
+    if (scaleFactor >= 2.2) {
+        let panRate = 20;
+        if (scaleFactor >= 2.8) panRate = 40;
+        const newBackgroundPosition = Math.max(0, 100 - (scaleFactor - 2.2) * panRate);
+        
+        // Add motion blur if background position is changing
+        if (Math.abs(newBackgroundPosition - backgroundPosition) > 0.1) {
+            document.body.style.filter = 'blur(8px)';
+            
+            // Remove blur after transition completes
+            setTimeout(() => {
+                document.body.style.filter = 'blur(0px)';
+            }, 200);
+        }
+        
+        backgroundPosition = newBackgroundPosition;
+        document.body.style.backgroundPosition = `center ${backgroundPosition}%`;
+    }
+
+    bottomImage.style.setProperty('--current-scale', currentScale);
+    bottomImage.style.setProperty('--new-scale', scaleFactor);
+    imageStack.style.transform = `translateX(-50%)`;
+
+    let effectiveScale = scaleFactor;
+    if (scaleFactor > 2.8) {
+        const extraScale = scaleFactor - 2.8;
+        effectiveScale = 2.8 + (extraScale * 0.3);
+    }
+
+    const heightIncrease = bottomImage.naturalHeight * (effectiveScale - 1);
+    const baseMultiplier = scaleFactor >= 2.0 ? 0.63 : 0.68;
+    const spacingAdjustment = Math.max(0, heightIncrease * baseMultiplier);
+
+    topImage.style.transform = `translate(44px, ${45 - spacingAdjustment}px)`;
+    bottomImage.style.transform = `scale(${effectiveScale})`;
+    scaleValue.textContent = scaleFactor.toFixed(1);
+}
+
+scaleSlider.addEventListener('input', function() {
+    updateScale(this.value);
+    updateRuler((this.value - 1)/4 * (maxMc - minMc) + minMc);
+});
+
+async function fetchMarketCap() {
+    try {
+        const res = await fetch("/api/marketcap");
+        const data = await res.json();
+        const price = Number(data.usdPrice || 0);
+        const mc = price * supply;
+
+        // Animate market cap change if there's a previous value
+        if (lastMc && lastMc !== mc) {
+            marketCapDisplay.innerHTML = "Market Cap: <span class='marketcap-amount'>$" + lastMc.toLocaleString() + "</span>";
+            animateMarketCapChange(lastMc, mc);
+        } else {
+            marketCapDisplay.innerHTML = "Market Cap: <span class='marketcap-amount'>$" + mc.toLocaleString() + "</span>";
+        }
+
+        const frac = Math.max(0, Math.min(1, (mc - minMc) / (maxMc - minMc)));
+        const newScale = 1 + frac * 4;
+        scaleSlider.value = newScale.toFixed(2);
+        updateScale(newScale);
+        updateRuler(mc);
+
+        if (lastMc && audioEnabled) {
+            if (mc > lastMc) {
+                audioUp.currentTime = 0;
+                audioUp.play().catch(e => console.log('Audio play failed:', e));
+                createConfetti();
+                createArrowShoot();
+                
+                if (isJeetMode) {
+                    isJeetMode = false;
+                    createScrollingMessage(); 
+                }
+            } else if (mc < lastMc) {
+                audioDown.currentTime = 0;
+                audioDown.play().catch(e => console.log('Audio play failed:', e));
+                createNegativeConfetti();
+                
+                if (!isJeetMode) {
+                    isJeetMode = true;
+                    createScrollingMessage(); 
+                }
+            }
+        }
+        lastMc = mc;
+    } catch (err) {
+        console.error("Error fetching market cap:", err);
+        marketCapDisplay.innerHTML = "Market Cap: <span class='marketcap-amount'>Error</span>";
+    }
+}
+
+let audioEnabled = false;
+
+function playNextTrack() {
+    if (currentBgMusic) {
+        currentBgMusic.pause();
+        currentBgMusic.currentTime = 0;
+    }
+    
+    currentTrackIndex = (currentTrackIndex + 1) % bgMusicTracks.length;
+    currentBgMusic = bgMusicTracks[currentTrackIndex];
+    
+    if (audioEnabled) {
+        currentBgMusic.volume = 0.01;
+        currentBgMusic.play().catch(e => console.log('Background music failed:', e));
+        updateNowPlaying();
+    }
+}
+
+function updateNowPlaying() {
+    const trackControls = document.getElementById('trackControls');
+    const trackName = document.getElementById('trackName');
+    
+    if (audioEnabled) {
+        trackControls.style.display = 'flex';
+        trackName.textContent = `Track ${currentTrackIndex + 1}`;
+    } else {
+        trackControls.style.display = 'none';
+    }
+}
+
+function skipToPrevious() {
+    if (currentBgMusic) {
+        currentBgMusic.pause();
+        currentBgMusic.currentTime = 0;
+    }
+    
+    currentTrackIndex = (currentTrackIndex - 1 + bgMusicTracks.length) % bgMusicTracks.length;
+    currentBgMusic = bgMusicTracks[currentTrackIndex];
+    
+    if (audioEnabled) {
+        currentBgMusic.volume = 0.01;
+        currentBgMusic.play().catch(e => console.log('Background music failed:', e));
+        updateNowPlaying();
+    }
+}
+
+function skipToNext() {
+    playNextTrack();
+}
+
+function animateMarketCapChange(fromValue, toValue, duration = 1000) {
+    const marketCapAmount = document.querySelector('.marketcap-amount');
+    marketCapAmount.classList.add('animating');
+    
+    // Add decreasing class for red glow if value is going down
+    if (toValue < fromValue) {
+        marketCapAmount.classList.add('decreasing');
+    }
+    
+    const startTime = Date.now();
+    const difference = toValue - fromValue;
+    
+    function updateValue() {
+        const elapsed = Date.now() - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Easing function for smooth animation
+        const easeProgress = progress < 0.5 
+            ? 2 * progress * progress 
+            : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+        
+        const currentValue = fromValue + (difference * easeProgress);
+        marketCapAmount.textContent = '$' + Math.round(currentValue).toLocaleString();
+        
+        if (progress < 1) {
+            requestAnimationFrame(updateValue);
+        } else {
+            marketCapAmount.classList.remove('animating', 'decreasing');
+        }
+    }
+    
+    updateValue();
+}
+
+function setupMusicEvents() {
+    bgMusicTracks.forEach((track, index) => {
+        track.addEventListener('ended', () => {
+            if (audioEnabled) {
+                playNextTrack();
+            }
+        });
+    });
+}
+
+function enableAudio() {
+    audioEnabled = true;
+    updateSoundButton();
+    updateNowPlaying();
+    
+    // Set background music volume and start playing
+    currentBgMusic.volume = 0.01;
+    currentBgMusic.play().catch(e => console.log('Background music failed:', e));
+    
+    audioUp.play().then(() => {
+        audioUp.pause();
+        audioUp.currentTime = 0;
+    }).catch(e => console.log('Audio test failed:', e));
+    audioDown.play().then(() => {
+        audioDown.pause();
+        audioDown.currentTime = 0;
+    }).catch(e => console.log('Audio test failed:', e));
+}
+
+function toggleSound() {
+    audioEnabled = !audioEnabled;
+    updateSoundButton();
+    updateNowPlaying();
+    
+    if (audioEnabled) {
+        // Start background music
+        currentBgMusic.volume = 0.01;
+        currentBgMusic.play().catch(e => console.log('Background music failed:', e));
+        
+        audioUp.play().then(() => {
+            audioUp.pause();
+            audioUp.currentTime = 0;
+        }).catch(e => console.log('Audio test failed:', e));
+    } else {
+        // Stop background music
+        currentBgMusic.pause();
+    }
+}
+
+function updateSoundButton() {
+    const soundButton = document.getElementById('soundToggle');
+    if (audioEnabled) {
+        soundButton.textContent = '🔊 Special effects ON';
+        soundButton.classList.remove('disabled');
+    } else {
+        soundButton.textContent = '🔇 Special effects OFF';
+        soundButton.classList.add('disabled');
+    }
+}
+
+window.addEventListener('load', function() {
+    buildRuler(minMc);
+    fetchMarketCap();
+    setInterval(fetchMarketCap, 5000);
+    
+    createScrollingMessage();
+    setInterval(createScrollingMessage, 10000); 
+    
+    // Start random dialogue system
+    startRandomDialogue();
+    
+    // Setup music system
+    setupMusicEvents();
+    
+    document.getElementById('soundToggle').addEventListener('click', toggleSound);
+    document.getElementById('prevTrack').addEventListener('click', skipToPrevious);
+    document.getElementById('nextTrack').addEventListener('click', skipToNext);
+    
+    document.addEventListener('click', enableAudio, { once: true });
+    document.addEventListener('keydown', enableAudio, { once: true });
+});
+</script>
+
+</body>
+</html>
