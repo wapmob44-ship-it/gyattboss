@@ -775,9 +775,9 @@ function updateScale(newScale) {
     imageStack.style.transform = `translateX(-50%)`;
 
     let effectiveScale = scaleFactor;
-    if (scaleFactor > 2.8) {
-        const extraScale = scaleFactor - 2.8;
-        effectiveScale = 2.8 + (extraScale * 0.3);
+    if (scaleFactor > 6) {
+        const extraScale = scaleFactor - 6;
+        effectiveScale = 6 + (extraScale * 0.3);
     }
 
     const heightIncrease = bottomImage.naturalHeight * (effectiveScale - 1);
