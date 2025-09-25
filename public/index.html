@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PNG Scale Demo with MarketCap Ruler</title>
+<title>Alon Gyatt Index</title>
 <!-- CRT Effect (delete these 2 lines to remove CRT effect) -->
-<link rel="stylesheet" href="./public/crt-effect.css">
-<script src="./public/crt-effect.js"></script>
+<link rel="stylesheet" href="crt-effect.css">
+<script src="crt-effect.js"></script>
 <style>
 /* --- your CSS unchanged --- */
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-    background-image: url('./public/bg3.png');
+    background-image: url('bg3.png');
     background-size: cover;
     background-position: center 100%;
     background-repeat: no-repeat;
@@ -389,11 +389,11 @@ body {
 </head>
 <body>
 
-<audio id="audioUp" src="./public/audio1.mp3" preload="auto"></audio>
-<audio id="audioDown" src="./public/audio2.mp3" preload="auto"></audio>
-<audio id="bgMusic1" src="./public/bgmusic.mp3" preload="auto"></audio>
-<audio id="bgMusic2" src="./public/bgmusic2.mp3" preload="auto"></audio>
-<audio id="bgMusic3" src="./public/bgmusic3.mp3" preload="auto"></audio>
+<audio id="audioUp" src="audio1.mp3" preload="auto"></audio>
+<audio id="audioDown" src="audio2.mp3" preload="auto"></audio>
+<audio id="bgMusic1" src="bgmusic.mp3" preload="auto"></audio>
+<audio id="bgMusic2" src="bgmusic2.mp3" preload="auto"></audio>
+<audio id="bgMusic3" src="bgmusic3.mp3" preload="auto"></audio>
 
 <div class="instruction-text">every $AGI buy makes Alons GYATT grow, every sell shrinks it</div>
 
@@ -416,8 +416,8 @@ body {
     </div>
 
     <div class="image-stack" id="imageStack">
-        <img src="./public/top.png" alt="Top Image" class="top-image" id="topImage">
-        <img src="./public/bottom.png" alt="Bottom Image" class="bottom-image" id="bottomImage">
+        <img src="top.png" alt="Top Image" class="top-image" id="topImage">
+        <img src="bottom.png" alt="Bottom Image" class="bottom-image" id="bottomImage">
     </div>
 
     <!-- Ruler -->
@@ -441,7 +441,7 @@ body {
 <!-- Dialogue Box -->
 <div class="dialogue-box" id="dialogueBox">
     <div class="dialogue-portrait">
-        <img src="./public/top.png" alt="Alon">
+        <img src="top.png" alt="Alon">
     </div>
     <div class="dialogue-content">
         <div class="dialogue-name">Alon</div>
@@ -582,7 +582,7 @@ function createArrowShoot() {
     
     for (let i = 0; i < arrowCount; i++) {
         const arrow = document.createElement('img');
-        arrow.src = './public/arrow-up.png';
+        arrow.src = 'arrow-up.png';
         arrow.className = 'arrow-up';
         arrow.style.left = Math.random() * window.innerWidth + 'px';
         arrow.style.animationDelay = Math.random() * 2 + 's';
@@ -633,7 +633,7 @@ function createConfetti() {
             }, 12000);
         } else {
             const confetti = document.createElement('img');
-            confetti.src = './public/logo.png';
+            confetti.src = 'logo.png';
             confetti.className = 'confetti';
             confetti.style.left = Math.random() * window.innerWidth + 'px';
             confetti.style.animationDelay = Math.random() * 3 + 's';
