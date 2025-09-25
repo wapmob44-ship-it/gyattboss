@@ -430,7 +430,7 @@ body {
 
     <div class="scale-slider-container">
         <div class="slider-label">Scale: <span id="scaleValue">1.0</span></div>
-        <input type="range" class="scale-slider" id="scaleSlider" min="1" max="5" step="0.1" value="1">
+        <input type="range" class="scale-slider" id="scaleSlider" min="1" max="100" step="0.1" value="1">
     </div>
 </div>
 
@@ -810,7 +810,7 @@ async function fetchMarketCap() {
         }
 
         const frac = Math.max(0, Math.min(1, (mc - minMc) / (maxMc - minMc)));
-        const newScale = 1 + frac * 4;
+        const newScale = 1 + frac * 99;
         scaleSlider.value = newScale.toFixed(2);
         updateScale(newScale);
         updateRuler(mc);
