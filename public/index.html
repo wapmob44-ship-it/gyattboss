@@ -810,7 +810,7 @@ async function fetchMarketCap() {
         }
 
         const frac = Math.max(0, Math.min(1, (mc - minMc) / (maxMc - minMc)));
-        const newScale = 1 + frac * 99;
+        const newScale = 1 + frac * 4;
         scaleSlider.value = newScale.toFixed(2);
         updateScale(newScale);
         updateRuler(mc);
