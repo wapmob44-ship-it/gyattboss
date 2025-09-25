@@ -250,7 +250,6 @@ body {
     transform-origin: center bottom;
     transition: transform 0.2s cubic-bezier(0.68,-0.55,0.265,1.55);
 }
-.scale-slider-container { position: absolute; opacity: 0%; bottom: 30px; right: 30px; }
 .ruler-container { 
     position: absolute; 
     top: 0; 
@@ -379,7 +378,7 @@ body {
         opacity: 0;
     }
 }
-.bounce-animation { animation: bounceScale 0.6s cubic-bezier(0.68,-0.55,0.265,1.55); }
+.bounce-animation { animation: bounceScale 1.2s cubic-bezier(0.68,-0.55,0.265,1.55); }
 @keyframes bounceScale {
     0% { transform: scale(var(--current-scale)); }
     50% { transform: scale(calc(var(--current-scale) + 0.1)); }
@@ -394,6 +393,16 @@ body {
 <audio id="bgMusic1" src="bgmusic.mp3" preload="auto"></audio>
 <audio id="bgMusic2" src="bgmusic2.mp3" preload="auto"></audio>
 <audio id="bgMusic3" src="bgmusic3.mp3" preload="auto"></audio>
+<audio id="bgMusic4" src="bgmusic4.mp3" preload="auto"></audio>
+<audio id="bgMusic5" src="bgmusic5.mp3" preload="auto"></audio>
+<audio id="bgMusic6" src="bgmusic6.mp3" preload="auto"></audio>
+<audio id="bgMusic7" src="bgmusic7.mp3" preload="auto"></audio>
+<audio id="bgMusic8" src="bgmusic8.mp3" preload="auto"></audio>
+<audio id="bgMusic9" src="bgmusic9.mp3" preload="auto"></audio>
+<audio id="bgMusic10" src="bgmusic10.mp3" preload="auto"></audio>
+<audio id="bgMusic11" src="bgmusic11.mp3" preload="auto"></audio>
+<audio id="bgMusic12" src="bgmusic12.mp3" preload="auto"></audio>
+<audio id="bgMusic13" src="bgmusic13.mp3" preload="auto"></audio>
 
 <div class="instruction-text">every $AGI buy makes Alons GYATT grow, every sell shrinks it</div>
 
@@ -428,10 +437,6 @@ body {
         </div>
     </div>
 
-    <div class="scale-slider-container">
-        <div class="slider-label">Scale: <span id="scaleValue">1.0</span></div>
-        <input type="range" class="scale-slider" id="scaleSlider" min="1" max="100" step="0.1" value="1">
-    </div>
 </div>
 
 <!-- Carousel -->
@@ -456,8 +461,6 @@ let backgroundPosition = 100;
 const bottomImage = document.getElementById('bottomImage');
 const topImage = document.getElementById('topImage');
 const imageStack = document.getElementById('imageStack');
-const scaleSlider = document.getElementById('scaleSlider');
-const scaleValue = document.getElementById('scaleValue');
 const marketCapDisplay = document.getElementById('marketCap');
 const ruler = document.getElementById('ruler');
 const rulerPointer = document.getElementById('rulerPointer');
@@ -466,7 +469,17 @@ const audioDown = document.getElementById('audioDown');
 const bgMusicTracks = [
     document.getElementById('bgMusic1'),
     document.getElementById('bgMusic2'),
-    document.getElementById('bgMusic3')
+    document.getElementById('bgMusic3'),
+    document.getElementById('bgMusic4'),
+    document.getElementById('bgMusic5'),
+    document.getElementById('bgMusic6'),
+    document.getElementById('bgMusic7'),
+    document.getElementById('bgMusic8'),
+    document.getElementById('bgMusic9'),
+    document.getElementById('bgMusic10'),
+    document.getElementById('bgMusic11'),
+    document.getElementById('bgMusic12'),
+    document.getElementById('bgMusic13')
 ];
 let currentTrackIndex = 0;
 let currentBgMusic = bgMusicTracks[0];
@@ -511,6 +524,40 @@ const dialogueMessages = [
     "who tf made this",
     "someone really spent hours making this",
     "next level memecoin",
+    "my gyatt is literally blocking my cell service",
+    "this is what peak performance looks like",
+    "my chair cant handle this much gyatt",
+    "probably nothing",
+    "sir this is a wendys",
+    "wen lambo? wen bigger pants?",
+    "i need to call my insurance company",
+    "this gyatt is going parabolic",
+    "diamond hands on this gyatt growth",
+    "my streams are never going to be the same",
+    "the SEC cant regulate this level of gyatt",
+    "bullish on gyatt technology",
+    "to the moon and beyond my ass",
+    "this is financial advice: buy a bigger screen",
+    "my gyatt market cap higher than most altcoins",
+    "vitalik could never",
+    "web3 was leading to this moment",
+    "the flippening but its my ass cheeks",
+    "number go up, gyatt go bigger",
+    "this is not what i meant by mass adoption",
+    "my gyatt has its own gravitational pull now",
+    "houston we have a problem",
+    "breaking: local mans gyatt disrupts global markets",
+    "i should have read the smart contract",
+    "this is why we cant have nice things",
+    "my gyatt is now a registered security",
+    "probably the most expensive ass in crypto",
+    "wagmi? more like waggyatt",
+    "this gyatt is deflationary",
+    "my ass is literally too big to fail",
+    "ngmi if you dont buy bigger pants",
+    "this is peak degen behavior",
+    "my gyatt just hit a new ATH",
+    "inch by inch"
 ];
 let dialogueTimeout = null;
 
@@ -602,9 +649,13 @@ function createArrowShoot() {
     }
 }
 
-function createConfetti() {
+function createConfetti(mcChange = 0) {
     const confettiCount = 35;
     const colors = ['#00ff40', '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57'];
+    
+    // Calculate inches based on market cap change
+    const baseInches = Math.max(0.1, Math.min(10, mcChange / 1000)); // 1 inch per 1k change, capped between 0.1 and 10
+    const inches = Math.round(baseInches * 10) / 10; // Round to 1 decimal place
     
     for (let i = 0; i < confettiCount; i++) {
         const isText = Math.random() < 0.3; // 30% chance of text
@@ -612,7 +663,7 @@ function createConfetti() {
         if (isText) {
             const confetti = document.createElement('div');
             confetti.className = 'confetti-text';
-            confetti.textContent = '+1 INCH GYATT';
+            confetti.textContent = `+${inches} INCH GYATT`;
             confetti.style.left = Math.random() * window.innerWidth + 'px';
             confetti.style.animationDelay = Math.random() * 3 + 's';
             confetti.style.animationDuration = (6 + Math.random() * 4) + 's';
@@ -656,13 +707,17 @@ function createConfetti() {
     }
 }
 
-function createNegativeConfetti() {
+function createNegativeConfetti(mcChange = 0) {
     const confettiCount = 20;
+    
+    // Calculate inches based on market cap change (absolute value for negative)
+    const baseInches = Math.max(0.1, Math.min(10, Math.abs(mcChange) / 1000)); // 1 inch per 1k change, capped between 0.1 and 10
+    const inches = Math.round(baseInches * 10) / 10; // Round to 1 decimal place
     
     for (let i = 0; i < confettiCount; i++) {
         const confetti = document.createElement('div');
         confetti.className = 'confetti-text';
-        confetti.textContent = '-1 INCH GYATT';
+        confetti.textContent = `-${inches} INCH GYATT`;
         confetti.style.left = Math.random() * window.innerWidth + 'px';
         confetti.style.animationDelay = Math.random() * 2 + 's';
         confetti.style.animationDuration = (6 + Math.random() * 4) + 's';
@@ -751,10 +806,10 @@ function updateScale(newScale) {
     void bottomImage.offsetWidth;
     bottomImage.classList.add("bounce-animation");
 
-    if (scaleFactor >= 2.2) {
+    if (scaleFactor >= 1.8) {
         let panRate = 20;
-        if (scaleFactor >= 2.8) panRate = 40;
-        const newBackgroundPosition = Math.max(0, 100 - (scaleFactor - 2.2) * panRate);
+        if (scaleFactor >= 2.4) panRate = 40;
+        const newBackgroundPosition = Math.max(0, 100 - (scaleFactor - 1.8) * panRate);
         
         // Add motion blur if background position is changing
         if (Math.abs(newBackgroundPosition - backgroundPosition) > 0.1) {
@@ -768,6 +823,12 @@ function updateScale(newScale) {
         
         backgroundPosition = newBackgroundPosition;
         document.body.style.backgroundPosition = `center ${backgroundPosition}%`;
+    } else {
+        // Reset background position when scale drops below panning threshold
+        if (backgroundPosition !== 100) {
+            backgroundPosition = 100;
+            document.body.style.backgroundPosition = `center ${backgroundPosition}%`;
+        }
     }
 
     bottomImage.style.setProperty('--current-scale', currentScale);
@@ -786,13 +847,8 @@ function updateScale(newScale) {
 
     topImage.style.transform = `translate(44px, ${45 - spacingAdjustment}px)`;
     bottomImage.style.transform = `scale(${effectiveScale})`;
-    scaleValue.textContent = scaleFactor.toFixed(1);
 }
 
-scaleSlider.addEventListener('input', function() {
-    updateScale(this.value);
-    updateRuler((this.value - 1)/4 * (maxMc - minMc) + minMc);
-});
 
 async function fetchMarketCap() {
     try {
@@ -809,27 +865,38 @@ async function fetchMarketCap() {
             marketCapDisplay.innerHTML = "Market Cap: <span class='marketcap-amount'>$" + mc.toLocaleString() + "</span>";
         }
 
-       // Dynamic scaling that continues beyond 200k
+       // Dynamic scaling with fast growth to 90k, then slower
         let newScale;
-        if (mc <= maxMc) {
-            // Normal scaling from 1x to 5x for market cap up to 200k
-            const frac = Math.max(0, Math.min(1, (mc - minMc) / (maxMc - minMc)));
-            newScale = 1 + frac * 4;
+        const fastGrowthLimit = 90000; // 90k market cap
+        
+        if (mc <= fastGrowthLimit) {
+            // Fast scaling from 1x to ~2.5x for market cap up to 90k
+            const frac = Math.max(0, Math.min(1, (mc - minMc) / (fastGrowthLimit - minMc)));
+            // Using square root for fast initial growth
+            newScale = 1 + 1.5 * Math.sqrt(frac);
+        } else if (mc <= maxMc) {
+            // Slower scaling from ~2.5x to 5x for market cap from 90k to 200k
+            const frac = (mc - fastGrowthLimit) / (maxMc - fastGrowthLimit);
+            // Using more gradual curve for higher market caps
+            newScale = 2.5 + 2.5 * Math.pow(frac, 1.5);
         } else {
-            // Continue scaling beyond 200k market cap
+            // Continue slower scaling beyond 200k market cap
             const excessMc = mc - maxMc;
-            const excessScale = excessMc / (maxMc - minMc) * 4; // Same rate as before
+            const excessFrac = excessMc / (maxMc - minMc);
+            // Very gradual scaling beyond 200k
+            const excessScale = 1.5 * Math.pow(excessFrac, 1.8);
             newScale = 5 + excessScale;
         }
-        scaleSlider.value = newScale.toFixed(2);
         updateScale(newScale);
         updateRuler(mc);
 
         if (lastMc && audioEnabled) {
             if (mc > lastMc) {
                 audioUp.currentTime = 0;
+                // Add random pitch variation (0.8x to 1.3x speed)
+                audioUp.playbackRate = 0.8 + Math.random() * 0.5;
                 audioUp.play().catch(e => console.log('Audio play failed:', e));
-                createConfetti();
+                createConfetti(mc - lastMc);
                 createArrowShoot();
                 
                 if (isJeetMode) {
@@ -838,8 +905,10 @@ async function fetchMarketCap() {
                 }
             } else if (mc < lastMc) {
                 audioDown.currentTime = 0;
+                // Add random pitch variation (0.8x to 1.3x speed)
+                audioDown.playbackRate = 0.8 + Math.random() * 0.5;
                 audioDown.play().catch(e => console.log('Audio play failed:', e));
-                createNegativeConfetti();
+                createNegativeConfetti(mc - lastMc);
                 
                 if (!isJeetMode) {
                     isJeetMode = true;
