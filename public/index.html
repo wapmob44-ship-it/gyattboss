@@ -809,8 +809,18 @@ async function fetchMarketCap() {
             marketCapDisplay.innerHTML = "Market Cap: <span class='marketcap-amount'>$" + mc.toLocaleString() + "</span>";
         }
 
-        const frac = Math.max(0, Math.min(1, (mc - minMc) / (maxMc - minMc)));
-        const newScale = 1 + frac * 4;
+       // Dynamic scaling that continues beyond 200k
+        let newScale;
+        if (mc <= maxMc) {
+            // Normal scaling from 1x to 5x for market cap up to 200k
+            const frac = Math.max(0, Math.min(1, (mc - minMc) / (maxMc - minMc)));
+            newScale = 1 + frac * 4;
+        } else {
+            // Continue scaling beyond 200k market cap
+            const excessMc = mc - maxMc;
+            const excessScale = excessMc / (maxMc - minMc) * 4; // Same rate as before
+            newScale = 5 + excessScale;
+        }
         scaleSlider.value = newScale.toFixed(2);
         updateScale(newScale);
         updateRuler(mc);
