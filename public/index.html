@@ -384,12 +384,136 @@ body {
     50% { transform: scale(calc(var(--current-scale) + 0.1)); }
     100% { transform: scale(var(--new-scale)); }
 }
+
+.growth-rate-meter {
+    position: fixed;
+    bottom: 120px;
+    left: 20px;
+    width: 250px;
+    background: #000;
+    border: 2px solid #fff;
+    padding: 15px;
+    font-family: 'Courier New', monospace;
+    z-index: 1000;
+}
+
+.meter-label {
+    color: #fff;
+    font-size: 14px;
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.meter-container {
+    position: relative;
+    width: 100%;
+    height: 25px;
+    background: #333;
+    border: 1px solid #fff;
+}
+
+.meter-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #00ff40 0%, #ffff00 50%, #ff4444 100%);
+    width: 0%;
+    transition: width 0.5s ease;
+}
+
+.meter-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #fff;
+    font-size: 12px;
+    text-shadow: 1px 1px 2px #000;
+}
+
+.achievement-popup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    width: 400px;
+    background: #000;
+    border: 3px solid #ffd700;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    z-index: 20000;
+    font-family: 'Courier New', monospace;
+    box-shadow: 0 0 30px #ffd700;
+    transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.achievement-popup.show {
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.achievement-icon {
+    font-size: 60px;
+    margin-bottom: 10px;
+}
+
+.achievement-title {
+    color: #ffd700;
+    font-size: 24px;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.achievement-description {
+    color: #fff;
+    font-size: 16px;
+}
+
+.achievement-counter {
+    position: fixed;
+    bottom: 60px;
+    left: 20px;
+    background: #000;
+    border: 2px solid #ffd700;
+    padding: 10px 15px;
+    font-family: 'Courier New', monospace;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 1000;
+}
+
+.counter-icon {
+    font-size: 20px;
+}
+
+.counter-text {
+    color: #ffd700;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+@keyframes fireworkExplode {
+    0% {
+        transform: scale(0);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(3);
+        opacity: 0.8;
+    }
+    100% {
+        transform: scale(6);
+        opacity: 0;
+    }
+}
 </style>
 </head>
 <body>
 
 <audio id="audioUp" src="audio1.mp3" preload="auto"></audio>
 <audio id="audioDown" src="audio2.mp3" preload="auto"></audio>
+<audio id="cheerSound" src="cheer.mp3" preload="auto"></audio>
+<audio id="coinSound" src="coin.mp3" preload="auto"></audio>
+<audio id="fireworksSound" src="fireworks.mp3" preload="auto"></audio>
 <audio id="bgMusic1" src="bgmusic.mp3" preload="auto"></audio>
 <audio id="bgMusic2" src="bgmusic2.mp3" preload="auto"></audio>
 <audio id="bgMusic3" src="bgmusic3.mp3" preload="auto"></audio>
@@ -408,6 +532,17 @@ body {
 
 <div class="container">
     <div class="marketcap-info" id="marketCap">Market Cap: <span class="marketcap-amount">Loading...</span></div>
+    <div class="growth-rate-meter" id="growthRateMeter">
+        <div class="meter-label">GYATT GROWTH RATE</div>
+        <div class="meter-container">
+            <div class="meter-fill" id="meterFill"></div>
+            <div class="meter-text" id="meterText">0%/min</div>
+        </div>
+    </div>
+    <div class="achievement-counter" id="achievementCounter">
+        <div class="counter-icon">🏆</div>
+        <div class="counter-text" id="counterText">0/15</div>
+    </div>
     <button class="sound-toggle" id="soundToggle">🔊 Special effects ON</button>
     <div class="social-buttons">
         <a href="https://x.com/AlonGyattIndex" target="_blank" class="social-btn">X</a>
@@ -454,6 +589,13 @@ body {
     </div>
 </div>
 
+<!-- Achievement Popup -->
+<div class="achievement-popup" id="achievementPopup">
+    <div class="achievement-icon">🏆</div>
+    <div class="achievement-title" id="achievementTitle">Achievement Unlocked!</div>
+    <div class="achievement-description" id="achievementDesc">Description here</div>
+</div>
+
 <script>
 let scaleFactor = 1;
 let backgroundPosition = 100;
@@ -466,6 +608,9 @@ const ruler = document.getElementById('ruler');
 const rulerPointer = document.getElementById('rulerPointer');
 const audioUp = document.getElementById('audioUp');
 const audioDown = document.getElementById('audioDown');
+const cheerSound = document.getElementById('cheerSound');
+const coinSound = document.getElementById('coinSound');
+const fireworksSound = document.getElementById('fireworksSound');
 const bgMusicTracks = [
     document.getElementById('bgMusic1'),
     document.getElementById('bgMusic2'),
@@ -488,12 +633,41 @@ const minMc = 5000, maxMc = 200000;
 const supply = 1_000_000_000;
 let lastMc = minMc;
 
+// Growth rate tracking
+let growthRateHistory = [];
+let currentGrowthRate = 0;
+
+// Achievement system
+let achievements = {
+    firstPump: { unlocked: false, title: "First Pump!", desc: "Market cap increased for the first time", threshold: 0 },
+    baby: { unlocked: false, title: "Baby Gyatt", desc: "Reached 10k market cap", threshold: 10000 },
+    growing: { unlocked: false, title: "Inch By Inch", desc: "Reached 25k market cap", threshold: 25000 },
+    milestone41: { unlocked: false, title: "WE GYATT TO GO HIGHER", desc: "Reached 41k market cap", threshold: 41000 },
+    halfway: { unlocked: false, title: "Halfway There", desc: "Reached 50k market cap", threshold: 50000 },
+    bigBoy: { unlocked: false, title: "Big Boy Gyatt", desc: "Reached 75k market cap", threshold: 75000 },
+    sixFigures: { unlocked: false, title: "Six Figures!", desc: "Reached 100k market cap", threshold: 100000 },
+    massive: { unlocked: false, title: "Massive Gyatt", desc: "Reached 150k market cap", threshold: 150000 },
+    legendary: { unlocked: false, title: "Space Gyatt", desc: "Reached 200k market cap", threshold: 200000 },
+    whale: { unlocked: false, title: "Whale Alert", desc: "Single pump over 10k", threshold: 0 },
+    diamond: { unlocked: false, title: "Diamond Gyatt", desc: "Reached 500k market cap", threshold: 500000 },
+    moon: { unlocked: false, title: "To The Moon!", desc: "Reached 1M market cap", threshold: 1000000 },
+    streak3: { unlocked: false, title: "Hot Streak", desc: "3 market cap increases in a row", threshold: 0 },
+    streak5: { unlocked: false, title: "On Fire!", desc: "5 market cap increases in a row", threshold: 0 },
+    streak10: { unlocked: false, title: "Unstoppable Force", desc: "10 market cap increases in a row", threshold: 0 }
+};
+
+let achievementCount = 0;
+let milestonesFired = new Set();
+let consecutiveIncreases = 0;
+let isFirstLoad = true;
+
 // Carousel messages
 const carouselMessages = [
     "pls pamp alons gyatt by using the new $AGI facilitated technology on pumpfun",
     "new $AGI technology facilitated on pumpfun allows you to increase its founders gyatt size",
     "every buy pamps the gyatt facilitated by groundbraking $AGI technology on pumpfun",
-    "help alon reach the moon powered by the latest $AGI technology on pumpfun"
+    "help alon reach the moon powered by the latest $AGI technology on pumpfun",
+    "help theyre holding me hostage and forcing me to develop $AGI gyatt technology"
 ];
 const jeetMessage = "the jeets are attacking alons gyatt size, concerned that the advanced technology may threaten their sidelined positions";
 let currentMessageIndex = 0;
@@ -557,7 +731,24 @@ const dialogueMessages = [
     "ngmi if you dont buy bigger pants",
     "this is peak degen behavior",
     "my gyatt just hit a new ATH",
-    "inch by inch"
+    "inch by inch",
+    "im gonna need a structural engineer for this gyatt",
+    "my gyatt is now visible from space",
+    "breaking news: local gyatt causes seismic activity",
+    "the fed is considering raising rates because of my ass",
+    "my gyatt just got its own zip code",
+    "someone call nasa, we have liftoff",
+    "this gyatt is single handedly inflating the economy",
+    "my chair manufacturer just went public",
+    "architects are studying my gyatt for inspiration",
+    "my gyatt has achieved escape velocity",
+    "the IMF wants to classify my ass as a currency",
+    "my gyatt is now a UNESCO world heritage site",
+    "scientists are using my gyatt to study gravity",
+    "my ass just broke the sound barrier",
+    "the UN wants to put sanctions on my gyatt size",
+    "my gyatt is causing tidal waves in the pacific",
+    "DYNAMIC_MARKETCAP_COMPLAINT"
 ];
 let dialogueTimeout = null;
 
@@ -580,7 +771,12 @@ function showDialogue() {
     const dialogueBox = document.getElementById('dialogueBox');
     const dialogueText = document.getElementById('dialogueText');
     
-    const randomMessage = dialogueMessages[Math.floor(Math.random() * dialogueMessages.length)];
+    let randomMessage = dialogueMessages[Math.floor(Math.random() * dialogueMessages.length)];
+    
+    // Handle dynamic market cap complaint
+    if (randomMessage === "DYNAMIC_MARKETCAP_COMPLAINT" && lastMc) {
+        randomMessage = `only $${lastMc.toLocaleString()} really? this gyatt deserves more`;
+    }
     
     dialogueBox.style.display = 'block';
     
@@ -738,6 +934,207 @@ function createNegativeConfetti(mcChange = 0) {
     }
 }
 
+function updateGrowthRate(mcChange, timeElapsed = 5000) {
+    // Calculate growth rate per minute
+    const changePerMinute = (mcChange / timeElapsed) * 60000;
+    const percentChange = (changePerMinute / lastMc) * 100;
+    
+    growthRateHistory.push(percentChange);
+    if (growthRateHistory.length > 6) { // Keep last 30 seconds of data
+        growthRateHistory.shift();
+    }
+    
+    // Average the recent growth rates
+    currentGrowthRate = growthRateHistory.reduce((sum, rate) => sum + rate, 0) / growthRateHistory.length;
+    
+    // Update meter display
+    const meterFill = document.getElementById('meterFill');
+    const meterText = document.getElementById('meterText');
+    
+    const displayRate = Math.abs(currentGrowthRate);
+    const meterPercent = Math.min(100, displayRate * 2); // Scale for visual
+    
+    meterFill.style.width = meterPercent + '%';
+    meterText.textContent = (currentGrowthRate >= 0 ? '+' : '-') + displayRate.toFixed(1) + '%/min';
+}
+
+function playAppropriateSound(mcChange) {
+    if (!audioEnabled) return;
+    
+    const absChange = Math.abs(mcChange);
+    
+    if (absChange >= 10000) {
+        // Big pump/dump - play cheer
+        cheerSound.currentTime = 0;
+        cheerSound.volume = 0.3;
+        cheerSound.play().catch(e => console.log('Cheer sound failed:', e));
+    } else if (absChange >= 500 && mcChange > 0) {
+        // Small gains - play coin sound
+        coinSound.currentTime = 0;
+        coinSound.volume = 0.2;
+        coinSound.playbackRate = 0.9 + Math.random() * 0.2; // Vary pitch slightly
+        coinSound.play().catch(e => console.log('Coin sound failed:', e));
+    }
+}
+
+function checkMilestones(mc) {
+    const milestones = [40000, 100000, 200000];
+    
+    milestones.forEach(milestone => {
+        if (mc >= milestone && !milestonesFired.has(milestone)) {
+            milestonesFired.add(milestone);
+            triggerFireworks(milestone, mc);
+        }
+    });
+}
+
+function triggerFireworks(milestone, currentMc) {
+    if (!audioEnabled) return;
+    
+    // Play fireworks sound
+    fireworksSound.currentTime = 0;
+    fireworksSound.volume = 0.4;
+    fireworksSound.play().catch(e => console.log('Fireworks sound failed:', e));
+    
+    // Create visual fireworks effect
+    createFireworksEffect();
+    
+    // Show special message with current market cap
+    const specialMessages = {
+        40000: `🎆 FORTY THOUSAND GYATT! 🎆\nCurrent: $${currentMc.toLocaleString()}`,
+        100000: `🎆 SIX FIGURES BABY! 🎆\nCurrent: $${currentMc.toLocaleString()}`,
+        200000: `🎆 LEGENDARY MILESTONE! 🎆\nCurrent: $${currentMc.toLocaleString()}`
+    };
+    
+    setTimeout(() => {
+        showAchievement("🎆 Milestone Reached! 🎆", specialMessages[milestone] || `🎆 FIREWORKS! 🎆\nCurrent: $${currentMc.toLocaleString()}`);
+    }, 500);
+}
+
+function createFireworksEffect() {
+    const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#ffd700', '#ff9ff3', '#54a0ff'];
+    
+    for (let i = 0; i < 50; i++) {
+        setTimeout(() => {
+            const firework = document.createElement('div');
+            firework.style.cssText = `
+                position: fixed;
+                width: 4px;
+                height: 4px;
+                background: ${colors[Math.floor(Math.random() * colors.length)]};
+                border-radius: 50%;
+                pointer-events: none;
+                z-index: 15000;
+                left: ${20 + Math.random() * (window.innerWidth - 40)}px;
+                top: ${20 + Math.random() * (window.innerHeight - 40)}px;
+                animation: fireworkExplode 2s ease-out forwards;
+            `;
+            
+            document.body.appendChild(firework);
+            setTimeout(() => firework.remove(), 2000);
+        }, Math.random() * 1000);
+    }
+}
+
+function checkAchievements(mc, mcChange) {
+    // Track consecutive increases for streak achievement
+    if (mcChange > 0) {
+        consecutiveIncreases++;
+    } else if (mcChange < 0) {
+        consecutiveIncreases = 0; // Reset on any decrease
+    }
+    
+    Object.keys(achievements).forEach(key => {
+        const achievement = achievements[key];
+        if (achievement.unlocked) return;
+        
+        let shouldUnlock = false;
+        let customDesc = null;
+        
+        // Special achievement logic with dynamic descriptions
+        if (key === 'firstPump' && mcChange > 0) {
+            shouldUnlock = true;
+            customDesc = `Market cap increased by $${Math.abs(mcChange).toLocaleString()}! Your first pump!`;
+        } else if (key === 'whale' && Math.abs(mcChange) >= 10000 && !isFirstLoad) {
+            shouldUnlock = true;
+            const changeType = mcChange > 0 ? 'increased' : 'decreased';
+            customDesc = `Market cap ${changeType} by $${Math.abs(mcChange).toLocaleString()} in one move! Whale activity detected!`;
+        } else if (key === 'streak3' && consecutiveIncreases >= 3) {
+            shouldUnlock = true;
+            customDesc = `${consecutiveIncreases} consecutive market cap increases! You're on fire!`;
+        } else if (key === 'streak5' && consecutiveIncreases >= 5) {
+            shouldUnlock = true;
+            customDesc = `${consecutiveIncreases} consecutive market cap increases! Unstoppable momentum!`;
+        } else if (key === 'streak10' && consecutiveIncreases >= 10) {
+            shouldUnlock = true;
+            customDesc = `${consecutiveIncreases} consecutive market cap increases! This is legendary!`;
+        } else if (achievement.threshold > 0 && mc >= achievement.threshold) {
+            shouldUnlock = true;
+            customDesc = `Market cap reached $${mc.toLocaleString()}! Milestone achieved!`;
+        }
+        
+        if (shouldUnlock) {
+            unlockAchievement(key, customDesc);
+        }
+    });
+}
+
+function unlockAchievement(key, customDesc = null) {
+    const achievement = achievements[key];
+    achievement.unlocked = true;
+    achievementCount++;
+    
+    updateAchievementCounter();
+    // Use custom description if provided, otherwise use default
+    const description = customDesc || achievement.desc;
+    showAchievement(achievement.title, description);
+}
+
+let achievementQueue = [];
+let isShowingAchievement = false;
+
+function showAchievement(title, description) {
+    // Add to queue if already showing an achievement
+    if (isShowingAchievement) {
+        achievementQueue.push({ title, description });
+        return;
+    }
+    
+    displayAchievement(title, description);
+}
+
+function displayAchievement(title, description) {
+    const popup = document.getElementById('achievementPopup');
+    const titleEl = document.getElementById('achievementTitle');
+    const descEl = document.getElementById('achievementDesc');
+    
+    isShowingAchievement = true;
+    
+    titleEl.textContent = title;
+    descEl.textContent = description;
+    
+    popup.classList.add('show');
+    
+    setTimeout(() => {
+        popup.classList.remove('show');
+        isShowingAchievement = false;
+        
+        // Show next achievement in queue if any
+        if (achievementQueue.length > 0) {
+            const next = achievementQueue.shift();
+            setTimeout(() => {
+                displayAchievement(next.title, next.description);
+            }, 300); // Small delay between achievements
+        }
+    }, 3000);
+}
+
+function updateAchievementCounter() {
+    const counterText = document.getElementById('counterText');
+    const totalAchievements = Object.keys(achievements).length;
+    counterText.textContent = `${achievementCount}/${totalAchievements}`;
+}
+
 function buildRuler(centerMc) {
     Array.from(ruler.children).forEach(c => { if(c !== rulerPointer) c.remove(); });
 
@@ -870,34 +1267,42 @@ async function fetchMarketCap() {
         const fastGrowthLimit = 90000; // 90k market cap
         
         if (mc <= fastGrowthLimit) {
-            // Fast scaling from 1x to ~2.5x for market cap up to 90k
+            // Fast scaling from 1x to ~2.8x for market cap up to 90k
             const frac = Math.max(0, Math.min(1, (mc - minMc) / (fastGrowthLimit - minMc)));
             // Using square root for fast initial growth
-            newScale = 1 + 1.5 * Math.sqrt(frac);
+            newScale = 1 + 1.8 * Math.sqrt(frac);
         } else if (mc <= maxMc) {
-            // Slower scaling from ~2.5x to 5x for market cap from 90k to 200k
+            // Slower scaling from ~2.8x to 3.5x for market cap from 90k to 200k
             const frac = (mc - fastGrowthLimit) / (maxMc - fastGrowthLimit);
             // Using more gradual curve for higher market caps
-            newScale = 2.5 + 2.5 * Math.pow(frac, 1.5);
+            newScale = 2.8 + 0.7 * Math.pow(frac, 1.5);
         } else {
             // Continue slower scaling beyond 200k market cap
             const excessMc = mc - maxMc;
             const excessFrac = excessMc / (maxMc - minMc);
             // Very gradual scaling beyond 200k
-            const excessScale = 1.5 * Math.pow(excessFrac, 1.8);
-            newScale = 5 + excessScale;
+            const excessScale = 0.5 * Math.pow(excessFrac, 2.0);
+            newScale = 3.5 + excessScale;
         }
         updateScale(newScale);
         updateRuler(mc);
 
         if (lastMc && audioEnabled) {
+            const mcChange = mc - lastMc;
+            
             if (mc > lastMc) {
                 audioUp.currentTime = 0;
                 // Add random pitch variation (0.8x to 1.3x speed)
                 audioUp.playbackRate = 0.8 + Math.random() * 0.5;
                 audioUp.play().catch(e => console.log('Audio play failed:', e));
-                createConfetti(mc - lastMc);
+                createConfetti(mcChange);
                 createArrowShoot();
+                
+                // New features
+                updateGrowthRate(mcChange);
+                playAppropriateSound(mcChange);
+                checkMilestones(mc);
+                checkAchievements(mc, mcChange);
                 
                 if (isJeetMode) {
                     isJeetMode = false;
@@ -908,7 +1313,12 @@ async function fetchMarketCap() {
                 // Add random pitch variation (0.8x to 1.3x speed)
                 audioDown.playbackRate = 0.8 + Math.random() * 0.5;
                 audioDown.play().catch(e => console.log('Audio play failed:', e));
-                createNegativeConfetti(mc - lastMc);
+                createNegativeConfetti(mcChange);
+                
+                // New features
+                updateGrowthRate(mcChange);
+                playAppropriateSound(mcChange);
+                checkAchievements(mc, mcChange);
                 
                 if (!isJeetMode) {
                     isJeetMode = true;
@@ -917,6 +1327,11 @@ async function fetchMarketCap() {
             }
         }
         lastMc = mc;
+        
+        // Set first load to false after first successful fetch
+        if (isFirstLoad) {
+            isFirstLoad = false;
+        }
     } catch (err) {
         console.error("Error fetching market cap:", err);
         marketCapDisplay.innerHTML = "Market Cap: <span class='marketcap-amount'>Error</span>";
@@ -1080,6 +1495,9 @@ window.addEventListener('load', function() {
     
     // Setup music system
     setupMusicEvents();
+    
+    // Initialize achievement counter
+    updateAchievementCounter();
     
     document.getElementById('soundToggle').addEventListener('click', toggleSound);
     document.getElementById('prevTrack').addEventListener('click', skipToPrevious);
